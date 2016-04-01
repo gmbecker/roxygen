@@ -26,13 +26,18 @@ roc_process.tests <- function(roclet, parsed, base_path,
 roc_output.tests <- function(roclet, results, base_path,
                             options = list(),
                             check = TRUE) {
-    fil <- normalizePath(file.path(
-        base_path, "tests", "tests_roxygen.R"))
-    if(!dir.exists(file.path(base_path, "tests")))
-        dir.create(file.path(base_path, "tests"))
-    con = file(fil, open="w")
+  test_path <- testthat_path(base_path)
+  uses_testthat <- length(test_path) > 0
+  if (!uses_testthat) {
+    test_path <- file.path(base_path, "tests")
+  }
+  if(!dir.exists(file.path(test_path)))
+    dir.create(file.path(test_path))
+
+  fil <- normalizePath(file.path(test_path, "tests_roxygen.R"), mustWork = FALSE)
+    con <- file(fil, open = "w")
     on.exit(close(con))
-    txt = c(made_by("#"),
+    txt <- c(made_by("#"),
             mapply(paste, x = sapply(names(results),
                                      test_file_ref),
                    y = results,
@@ -46,4 +51,11 @@ test_file_ref<- function( fil ) {
     paste("\n## Tests generated from roxygen comments in file:", file.path("R", basename(fil)))
 }
 
-        
+# same logic as devtools::uses_testthat()
+testthat_path <- function(base_path) {
+  paths <- c(
+    file.path(base_path, "inst", "tests"),
+    file.path(base_path, "tests", "testthat")
+    )
+  paths[dir.exists(paths)]
+}
